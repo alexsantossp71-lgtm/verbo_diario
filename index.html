@@ -273,14 +273,24 @@
             parseVerses: (text) => {
                 // Split on verse numbers: digit(s) followed by an uppercase letter
                 const parts = text.split(/(\d+)(?=[A-ZÁÀÂÃÉÊÍÓÔÕÚÜÇ])/);
+                
+                // Function to format inline verses (mid-sentence verses starting with lowercase)
+                const formatInlineVerses = (str) => {
+                    return str.replace(/(\d+)(?=[a-záàâãéêíóôõúüç])/g, '<span class="inline-block text-xs font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded mx-1 align-baseline">$1</span> ');
+                };
+
                 const verses = [];
                 for (let i = 1; i < parts.length; i += 2) {
                     const num = parts[i];
-                    const content = parts[i + 1] ? parts[i + 1].trim() : '';
+                    let content = parts[i + 1] ? parts[i + 1].trim() : '';
+                    content = formatInlineVerses(content);
+                    
                     if (content) verses.push({ num, content });
                 }
-                // If no verse numbers found, treat whole text as single block
-                if (verses.length === 0) return [{ num: '', content: text.trim() }];
+                
+                // If no uppercase verse numbers found, treat whole text as single block but try inline formatting
+                if (verses.length === 0) return [{ num: '', content: formatInlineVerses(text.trim()) }];
+                
                 return verses;
             },
 
