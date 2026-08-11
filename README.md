@@ -1,5 +1,9 @@
 # Verbo Diário 📖
 
+![CI](https://img.shields.io/github/actions/workflow/status/alexsantossp71-lgtm/verbo_diario/ci.yml?label=CI)
+![Pages](https://img.shields.io/github/actions/workflow/status/alexsantossp71-lgtm/verbo_diario/pages.yml?label=Pages)
+![License](https://img.shields.io/github/license/alexsantossp71-lgtm/verbo_diario)
+
 Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras do dia com tipografia confortável e tema Material Design.
 
 ## ✨ Funcionalidades
