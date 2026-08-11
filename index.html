@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verbo Diário - Liturgia Diária</title>
+    <meta name="description" content="Verbo Diário: leituras da liturgia católica de todos os dias — 1ª Leitura, Salmo Responsorial, Evangelho e reflexão, com tipografia confortável e tema claro/escuro.">
+    <meta property="og:title" content="Verbo Diário - Liturgia Diária">
+    <meta property="og:description" content="Leituras da liturgia católica de todos os dias em tipografia confortável.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#000000">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -120,7 +125,10 @@
                     </div>
                 </div>
                 <div class="md:hidden flex items-center gap-2">
-                    <button id="fontToggleMobile" class="p-2 rounded-full hover:bg-gray-100 transition-all" onclick="toggleFont()">
+                    <button id="themeToggleMobile" class="p-2 rounded-full hover:bg-gray-100 transition-all" onclick="toggleTheme()" aria-label="Alternar tema claro/escuro">
+                        <span class="material-symbols-outlined text-xl" id="themeIconMobile">dark_mode</span>
+                    </button>
+                    <button id="fontToggleMobile" class="p-2 rounded-full hover:bg-gray-100 transition-all" onclick="toggleFont()" aria-label="Alternar tamanho da fonte">
                         <span class="material-symbols-outlined text-xl">format_size</span>
                     </button>
                     <button onclick="openDateModal()" class="p-2 rounded-full hover:bg-gray-100 transition-all">
@@ -138,11 +146,14 @@
 
             <!-- Size control on desktop -->
             <div class="hidden md:flex items-center gap-3">
-                <button id="fontToggleDesktop" class="p-3 rounded-full hover:bg-gray-100 transition-all flex items-center gap-2 text-sm font-bold" onclick="toggleFont()">
+                <button id="themeToggleDesktop" class="p-3 rounded-full hover:bg-gray-100 transition-all flex items-center gap-2 text-sm font-bold" onclick="toggleTheme()" aria-label="Alternar tema claro/escuro">
+                    <span class="material-symbols-outlined" id="themeIconDesktop">dark_mode</span>
+                </button>
+                <button id="fontToggleDesktop" class="p-3 rounded-full hover:bg-gray-100 transition-all flex items-center gap-2 text-sm font-bold" onclick="toggleFont()" aria-label="Alternar tamanho da fonte">
                     <span class="material-symbols-outlined">format_size</span>
                     <span id="fontLabel">A</span>
                 </button>
-                <button onclick="openDateModal()" class="p-3 rounded-full hover:bg-gray-100 transition-all" title="Ver outro dia">
+                <button onclick="openDateModal()" class="p-3 rounded-full hover:bg-gray-100 transition-all" title="Ver outro dia" aria-label="Ver outro dia">
                     <span class="material-symbols-outlined">calendar_month</span>
                 </button>
             </div>
@@ -219,20 +230,41 @@
         ];
         let fontIndex = 0;
 
-        function toggleFont() {
-            fontIndex = (fontIndex + 1) % fontSizes.length;
+        // --- Theme (claro/escuro) ---
+        const THEME_KEY = 'verbo.theme';
+
+        function applyTheme() {
+            const dark = document.body.classList.contains('dark');
+            const icon = document.getElementById('themeIconDesktop');
+            const iconMobile = document.getElementById('themeIconMobile');
+            const name = dark ? 'light_mode' : 'dark_mode';
+            if (icon) icon.textContent = name;
+            if (iconMobile) iconMobile.textContent = name;
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', dark ? '#1a1c1c' : '#ffffff');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            localStorage.setItem(THEME_KEY, document.body.classList.contains('dark') ? 'dark' : 'light');
+            applyTheme();
+        }
+
+        function applyFont() {
             const f = fontSizes[fontIndex];
             document.documentElement.style.setProperty('--reading-font-size', f.reading);
-            // Override h1/h2 base sizes directly
             document.querySelectorAll('h1').forEach(el => el.style.fontSize = f.h1);
             document.querySelectorAll('h2').forEach(el => el.style.fontSize = f.h2);
-            // Also scale paragraph text directly (bypasses Tailwind specificity)
             document.querySelectorAll('.reading-text p, section p').forEach(el => {
                 el.style.fontSize = f.reading;
             });
-            // Update label
             const label = document.getElementById('fontLabel');
             if (label) label.textContent = f.label;
+        }
+
+        function toggleFont() {
+            fontIndex = (fontIndex + 1) % fontSizes.length;
+            applyFont();
         }
 
         // --- Date Modal & Global App Instance ---
@@ -404,6 +436,10 @@
             }
 
             async init() {
+                if (localStorage.getItem(THEME_KEY) === 'dark') {
+                    document.body.classList.add('dark');
+                }
+                applyTheme();
                 window.addEventListener('scroll', () => this.handleScroll());
                 appInstance = this;
                 await this.loadDate(null);
@@ -492,9 +528,9 @@
                      html += Components.HomilySection("Reflexão", "Padre Antônio", "O silêncio é a voz de Deus.");
                 }
                 this.appContent.innerHTML = html;
-                
-                // Keep font size correct
-                toggleFont(); toggleFont(); toggleFont(); // lazy trigger to maintain current scale
+
+                // Mantém tamanho de fonte e tema atuais após re-render
+                applyFont();
             }
         }
 

@@ -4,10 +4,12 @@ Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras
 
 ## ✨ Funcionalidades
 
-- 📖 **Liturgia diária** com leituras do dia
+- 📖 **Liturgia diária** com leituras do dia (1ª Leitura, Salmo Responsorial, Evangelho e reflexão)
+- 📅 **Seletor de data** para consultar qualquer dia do calendário litúrgico
 - 🔤 **Tipografia otimizada para leitura** (fonte Lexend, tamanho e espaçamento ajustáveis)
-- 🌓 **Tema claro/escuro** estilo Material Design
+- 🌓 **Tema claro/escuro** estilo Material Design (preferência salva no navegador)
 - 📱 **Layout responsivo** para mobile e desktop
+- 🛡️ **Fallback local** quando a API está indisponível (mostra conteúdo de exemplo)
 
 ## 🚀 Como executar
 
@@ -24,6 +26,15 @@ python3 -m http.server 8000
 # acesse http://localhost:8000
 ```
 
+## 🔌 API utilizada
+
+Os dados litúrgicos são obtidos da API pública:
+
+- `https://liturgia.up.railway.app/` (liturgia de hoje)
+- `https://liturgia.up.railway.app/DD-MM-YYYY` (data específica)
+
+Se a API falhar, o aplicativo exibe um conteúdo de exemplo para não ficar em branco.
+
 ## 📁 Estrutura do projeto
 
 ```
@@ -38,4 +49,4 @@ python3 -m http.server 8000
 
 ## 📄 Licença
 
-Projeto de estudo e devoção pessoal.
+Distribuído sob a **MIT License** — veja `LICENSE`.
