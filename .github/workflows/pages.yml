@@ -20,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -33,5 +32,11 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      - name: Report
-        run: echo "Site pronto para deploy."
+       
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
