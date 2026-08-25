@@ -138,3 +138,16 @@ test('ReadingCard e PsalmSection produzem as âncoras usadas na navegação', ()
   const salmo = Components.PsalmSection(terca.salmo.referencia, terca.salmo.refrao, terca.salmo.texto);
   assert.match(salmo, /id="psalm"/);
 });
+
+test('HomilySection renderiza autor, âncora e escapa o conteúdo', () => {
+  const html = Components.HomilySection(
+    'Reflexão <do dia>',
+    'Equipe <VD>',
+    ['Primeiro parágrafo.', '<img src=x onerror="alert(1)">']
+  );
+
+  assert.match(html, /id="reflection"/);
+  assert.ok(html.includes('Equipe &lt;VD&gt;'), 'o autor deve ser escapado');
+  assert.ok(!html.includes('<img src=x'), 'o conteúdo da reflexão deve ser escapado');
+  assert.match(plainText(html), /Primeiro parágrafo\./);
+});
