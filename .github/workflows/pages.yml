@@ -28,7 +28,8 @@ jobs:
       - name: Preparar site (apenas arquivos publicáveis)
         run: |
           mkdir -p _site
-          cp index.html _site/
+          cp index.html styles.css manifest.json sw.js favicon.svg favicon.ico _site/
+          cp -R icons _site/
           cp LICENSE _site/
           mkdir -p _site/data
           cp -R data/reflexoes _site/data/
