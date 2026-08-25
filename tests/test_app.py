@@ -45,13 +45,42 @@ def test_index_nao_contem_leituras_falsas():
         html = fh.read()
     assert "No meu primeiro livro..." not in html
     assert "Vendo as multidões..." not in html
+    assert "O silêncio é a voz de Deus." not in html
 
 
 def test_index_referencia_ancoras_da_navegacao():
     with open(_path("index.html"), encoding="utf-8") as fh:
         html = fh.read()
-    for ancora in ("reading-1", "psalm", "gospel"):
+    for ancora in ("reading-1", "psalm", "gospel", "reflection"):
         assert re.search(r'href="#%s"' % ancora, html), f"link para #{ancora} ausente"
+
+
+def test_reflexoes_mensais_totalizam_366_registros():
+    base = _path("data", "reflexoes")
+    arquivos = sorted(f for f in os.listdir(base) if f.endswith(".json"))
+    assert arquivos == [f"{mes:02d}.json" for mes in range(1, 13)]
+
+    total = 0
+    fevereiro = None
+    for nome in arquivos:
+        with open(os.path.join(base, nome), encoding="utf-8") as fh:
+            dados = json.load(fh)
+        dias = dados.get("days", {})
+        total += len(dias)
+        if nome == "02.json":
+            fevereiro = dias
+
+    assert total == 366, f"esperado 366 reflexões, obtido {total}"
+    assert fevereiro is not None and "29" in fevereiro, "fevereiro precisa conter o dia 29"
+
+
+def test_index_carrega_reflexoes_por_mes():
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert "REFLECTIONS_BASE_PATH = './data/reflexoes'" in html
+    assert "getReflectionMonthPath(month)" in html
+    assert "this.reflectionsCache = new Map()" in html
+    assert "await fetch(getReflectionMonthPath(monthKey))" in html
 
 
 def test_modal_de_data_e_dialogo_acessivel():

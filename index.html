@@ -263,6 +263,7 @@
                 <a href="#reading-1" class="hover:text-primary transition-colors text-xs md:text-base whitespace-nowrap">1ª Leitura</a>
                 <a href="#psalm" class="hover:text-primary transition-colors text-xs md:text-base whitespace-nowrap">Salmo</a>
                 <a href="#gospel" class="hover:text-primary transition-colors text-xs md:text-base whitespace-nowrap">Evangelho</a>
+                <a href="#reflection" class="hover:text-primary transition-colors text-xs md:text-base whitespace-nowrap">Reflexão</a>
             </nav>
 
             <!-- Size control on desktop -->
@@ -330,6 +331,10 @@
                     <a href="#gospel" class="surface-panel flex items-center gap-4 p-4 rounded-2xl shadow-sm text-primary font-bold">
                         <span class="material-symbols-outlined">auto_stories</span>
                         Evangelho de Hoje
+                    </a>
+                    <a href="#reflection" class="surface-panel flex items-center gap-4 p-4 rounded-2xl shadow-sm text-primary font-bold theme-hover transition-all">
+                        <span class="material-symbols-outlined">favorite</span>
+                        Reflexão do Dia
                     </a>
                 </nav>
             </div>
@@ -466,6 +471,34 @@
             const label = String(color == null ? '' : color).trim();
             const key = label.toLocaleLowerCase('pt-BR');
             return LITURGICAL_COLORS[key] || '#64748b';
+        }
+
+        const REFLECTIONS_BASE_PATH = './data/reflexoes';
+
+        function padDatePart(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function resolveSelectedDateParts(dateStr) {
+            if (dateStr) {
+                const [year, month, day] = String(dateStr).split('-');
+                return {
+                    year,
+                    month: padDatePart(month),
+                    day: padDatePart(day),
+                    iso: `${year}-${padDatePart(month)}-${padDatePart(day)}`,
+                };
+            }
+
+            const today = new Date();
+            const year = String(today.getFullYear());
+            const month = padDatePart(today.getMonth() + 1);
+            const day = padDatePart(today.getDate());
+            return { year, month, day, iso: `${year}-${month}-${day}` };
+        }
+
+        function getReflectionMonthPath(month) {
+            return `${REFLECTIONS_BASE_PATH}/${padDatePart(month)}.json`;
         }
 
         const Components = {
@@ -606,14 +639,23 @@
                     </div>
                 </section>
             `},
-            HomilySection: (title, author, content) => `
-                <section class="max-w-4xl mx-auto mb-24 px-6">
-                    <h1 class="text-5xl md:text-7xl font-black mb-8">${title}</h1>
+            HomilySection: (title, author, content) => {
+                const paragraphs = Array.isArray(content)
+                    ? content
+                    : String(content == null ? '' : content).split('\n');
+                const safeAuthor = String(author == null ? '' : author).trim();
+                return `
+                <section class="max-w-4xl mx-auto mb-24 px-6" id="reflection">
+                    <div class="mb-12">
+                        <span class="text-secondary uppercase tracking-widest text-xs font-bold mb-2 block">Reflexão do Dia</span>
+                        <h2 class="text-4xl md:text-6xl font-black text-on-surface tracking-tight leading-tight">${escapeHtml(title)}</h2>
+                        ${safeAuthor ? `<p class="theme-muted text-sm md:text-base font-bold mt-4">${escapeHtml(safeAuthor)}</p>` : ''}
+                    </div>
                     <article class="bg-surface-container-lowest p-8 md:p-20 rounded-[3rem] shadow-sm reading-text">
-                        ${content.split('\n').map(p => p.trim() ? `<p class="reading-paragraph mb-10 text-xl md:text-2xl">${p}</p>` : '').join('')}
+                        ${paragraphs.map(p => p.trim() ? `<p class="reading-paragraph mb-10 text-xl md:text-2xl">${escapeHtml(p.trim())}</p>` : '').join('')}
                     </article>
                 </section>
-            `,
+            `},
             DailyInfo: (date, color) => {
                 const colorLabel = String(color == null ? 'Desconhecida' : color).trim() || 'Desconhecida';
                 return `
@@ -638,6 +680,7 @@
                 this.header = document.getElementById('mainHeader');
                 this.dateBanner = document.getElementById('dateBanner');
                 this.currentDateStr = null; // null means 'today'
+                this.reflectionsCache = new Map();
                 this.init();
             }
 
@@ -706,6 +749,34 @@
                 await this.fetchData();
             }
 
+            async loadReflectionMonth(month) {
+                const monthKey = padDatePart(month);
+                if (this.reflectionsCache.has(monthKey)) {
+                    return this.reflectionsCache.get(monthKey);
+                }
+
+                const response = await fetch(getReflectionMonthPath(monthKey));
+                if (!response.ok) {
+                    throw new Error(`Arquivo de reflexões indisponível para o mês ${monthKey}.`);
+                }
+
+                const payload = await response.json();
+                const days = payload && typeof payload.days === 'object' ? payload.days : {};
+                this.reflectionsCache.set(monthKey, days);
+                return days;
+            }
+
+            async getReflectionForSelectedDate() {
+                const { month, day } = resolveSelectedDateParts(this.currentDateStr);
+                try {
+                    const monthEntries = await this.loadReflectionMonth(month);
+                    return monthEntries[day] || null;
+                } catch (error) {
+                    console.warn('Reflection Load Error:', error);
+                    return null;
+                }
+            }
+
             async fetchData() {
                 let url = 'https://liturgia.up.railway.app/';
                 if (this.currentDateStr) {
@@ -736,8 +807,10 @@
                     return;
                 }
 
+                let reflection = null;
                 try {
-                    this.render(data);
+                    reflection = await this.getReflectionForSelectedDate();
+                    this.render(data, reflection);
                 } catch (err) {
                     console.error('Render Error:', err);
                     this.renderError(err);
@@ -787,7 +860,7 @@
                 this.scrollIndicator.style.height = Math.min(100, (winScroll / height) * 100) + "%";
             }
 
-            render(data) {
+            render(data, reflection) {
                 this.dailyInfoContainer.innerHTML = Components.DailyInfo(data.data || "Hoje", data.cor || "Verde");
                 let html = '';
                 if (data.primeiraLeitura && typeof data.primeiraLeitura === 'object') {
@@ -802,8 +875,12 @@
                 if (data.evangelho && typeof data.evangelho === 'object') {
                     html += Components.ReadingCard("Evangelho", data.evangelho.referencia, data.evangelho.texto, "gospel");
                 }
-                if (!this.currentDateStr) {
-                     html += Components.HomilySection("Reflexão", "Padre Antônio", "O silêncio é a voz de Deus.");
+                if (reflection && typeof reflection === 'object') {
+                    html += Components.HomilySection(
+                        reflection.title || 'Reflexão do Dia',
+                        reflection.author || '',
+                        reflection.content || []
+                    );
                 }
                 this.appContent.innerHTML = html;
 

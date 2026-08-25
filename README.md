@@ -8,7 +8,8 @@ Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras
 
 ## ✨ Funcionalidades
 
-- 📖 **Liturgia diária** com leituras do dia (1ª Leitura, Salmo Responsorial, Evangelho e reflexão)
+- 📖 **Liturgia diária** com leituras do dia (1ª Leitura, Salmo Responsorial e Evangelho)
+- 💭 **Reflexões diárias locais** com 366 textos curtos, carregados por mês
 - 📅 **Seletor de data** para consultar qualquer dia do calendário litúrgico
 - 🔤 **Tipografia otimizada para leitura** (fonte Lexend, tamanho e espaçamento ajustáveis)
 - 🌓 **Tema claro/escuro** estilo Material Design (preferência salva no navegador)
@@ -18,13 +19,7 @@ Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras
 
 ## 🚀 Como executar
 
-Basta abrir o arquivo no navegador:
-
-```
-index.html
-```
-
-Ou servir via servidor local:
+Para a liturgia e as reflexões mensais funcionarem juntas, sirva o projeto via servidor local:
 
 ```bash
 python3 -m http.server 8000
@@ -45,6 +40,7 @@ de erro com opção de tentar novamente — nunca leituras inventadas.
 
 ```
 ├── index.html              # Aplicação completa (HTML + CSS + JS)
+├── data/reflexoes/         # Reflexões diárias agrupadas por mês (01.json ... 12.json)
 ├── ANALISE.md              # Relatório técnico do projeto
 └── tests/
     ├── parsing.test.js     # Testes de renderização (node --test)
