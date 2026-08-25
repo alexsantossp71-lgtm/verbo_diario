@@ -1,0 +1,101 @@
+commit 490c3d6a71ddb2065d85932648486bb769f5fae4
+Author: alexsantossp71-lgtm <230403115+alexsantossp71-lgtm@users.noreply.github.com>
+Date:   Tue Aug 25 14:17:13 2026 +0000
+
+    Corrige perda de conteúdo litúrgico na renderização
+    
+    O app descartava parte das leituras do dia por dois bugs no parsing:
+    
+    1. parseVerses() ignorava tudo antes do primeiro versículo casado e não
+       reconhecia números seguidos de aspas curvas ("23“Ai de vós..."), padrão
+       da API para discurso direto. No Evangelho de 25/08/2026 apenas 48% do
+       texto chegava à tela — o preâmbulo e o v.23 sumiam sem aviso.
+    
+    2. PsalmSection() dividia as estrofes por EM DASH (U+2014), mas a API usa
+       EN DASH (U+2013) + quebra de linha. Nenhuma divisão ocorria e os refrãos
+       intercalados nunca eram inseridos.
+    
+    Também substitui o fallback que inventava leituras ("Atos 1, 1-11",
+    "No meu primeiro livro...") por um estado de erro explícito com botão de
+    tentar novamente, e adiciona timeout de 8s via AbortController para evitar
+    o esqueleto de carregamento infinito.
+    
+    Demais mudanças:
+    - escapa conteúdo da API antes de injetar via innerHTML
+    - remove código morto: const raw (lookbehind sem suporte em Safari <16.4)
+      e a regra CSS body.large-text
+    - testes de regressão com payloads reais da API (node --test)
+    - corrige test_css, que exigia um style.css inexistente e deixava o CI
+      vermelho desde o commit anterior
+    - CI com setup-node/setup-python e cache; Pages publica só index.html
+    - adiciona .gitignore
+    
+    Co-authored-by: arena-agent <297053741+arena-agent@users.noreply.github.com>
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 14a6ed1..8fa06f9 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -4,19 +4,35 @@ on:
+   push:
+     branches: [main]
+   pull_request:
+-    branches: [main]
+ 
+ jobs:
+   validate:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
++
+       - name: Verificar arquivos essenciais
+         run: |
+           test -f README.md && echo "README OK"
+           test -f index.html && echo "HTML OK"
+           test -f LICENSE && echo "LICENSE OK"
+-      - name: Testes
+-        run: |
+-          python -m pip install pytest --quiet
+-          pytest -q
+\ No newline at end of file
++
++      - name: Configurar Node
++        uses: actions/setup-node@v4
++        with:
++          node-version: '20'
++
++      - name: Testes de renderização (Node)
++        run: node --test 'tests/*.test.js'
++
++      - name: Configurar Python
++        uses: actions/setup-python@v5
++        with:
++          python-version: '3.12'
++          cache: pip
++
++      - name: Instalar dependências
++        run: python -m pip install --quiet pytest
++
++      - name: Testes estruturais (pytest)
++        run: pytest -q
+diff --git a/.github/workflows/pages.yml b/.github/workflows/pages.yml
+index 81cbcc0..61cd87d 100644
+--- a/.github/workflows/pages.yml
++++ b/.github/workflows/pages.yml
+@@ -23,10 +23,15 @@ jobs:
+         uses: actions/checkout@v4
+       - name: Setup Pages
+         uses: actions/configure-pages@v5
++      - name: Preparar site (apenas arquivos publicáveis)
++        run: |
++          mkdir -p _site
++          cp index.html _site/
++          cp LICENSE _site/
+       - name: Upload artifact
+         uses: actions/upload-pages-artifact@v3
+         with:
+-          path: .
++          path: _site
+       - name: Report
+         run: echo "Site pronto para deploy."
+ 

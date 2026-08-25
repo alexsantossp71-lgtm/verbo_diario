@@ -13,7 +13,7 @@ Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras
 - 🔤 **Tipografia otimizada para leitura** (fonte Lexend, tamanho e espaçamento ajustáveis)
 - 🌓 **Tema claro/escuro** estilo Material Design (preferência salva no navegador)
 - 📱 **Layout responsivo** para mobile e desktop
-- 🛡️ **Fallback local** quando a API está indisponível (mostra conteúdo de exemplo)
+- 🛡️ **Estado de erro honesto** quando a API está indisponível (com botão de tentar novamente)
 
 ## 🚀 Como executar
 
@@ -37,12 +37,19 @@ Os dados litúrgicos são obtidos da API pública:
 - `https://liturgia.up.railway.app/` (liturgia de hoje)
 - `https://liturgia.up.railway.app/DD-MM-YYYY` (data específica)
 
-Se a API falhar, o aplicativo exibe um conteúdo de exemplo para não ficar em branco.
+As requisições têm timeout de 8 s. Se a API falhar, o aplicativo exibe uma mensagem
+de erro com opção de tentar novamente — nunca leituras inventadas.
 
 ## 📁 Estrutura do projeto
 
 ```
-└── index.html    # Aplicação completa (HTML + CSS + JS)
+├── index.html              # Aplicação completa (HTML + CSS + JS)
+├── ANALISE.md              # Relatório técnico do projeto
+└── tests/
+    ├── parsing.test.js     # Testes de renderização (node --test)
+    ├── harness.js          # Extrai o JS do index.html para teste
+    ├── test_app.py         # Testes estruturais (pytest)
+    └── fixtures/           # Respostas reais da API usadas nos testes
 ```
 
 ## 🛠️ Tecnologias
@@ -50,6 +57,13 @@ Se a API falhar, o aplicativo exibe um conteúdo de exemplo para não ficar em b
 - HTML5 + CSS3
 - Tailwind CSS (via CDN)
 - JavaScript vanilla
+
+## 🧪 Testes
+
+```bash
+node --test 'tests/*.test.js'   # renderização das leituras e do salmo
+pytest -q                       # verificações estruturais
+```
 
 ## 📄 Licença
 
