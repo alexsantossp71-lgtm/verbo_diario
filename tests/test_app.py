@@ -74,6 +74,23 @@ def test_reflexoes_mensais_totalizam_366_registros():
     assert fevereiro is not None and "29" in fevereiro, "fevereiro precisa conter o dia 29"
 
 
+def test_setembro_tem_uma_reflexao_unica_para_cada_dia():
+    """Setembro deve relacionar cada dia a uma reflexão diferente."""
+    with open(_path("data", "reflexoes", "09.json"), encoding="utf-8") as fh:
+        dias = json.load(fh)["days"]
+
+    assert sorted(dias) == [f"{dia:02d}" for dia in range(1, 31)]
+    reflexoes = [json.dumps(dias[dia], ensure_ascii=False, sort_keys=True) for dia in sorted(dias)]
+    assert len(set(reflexoes)) == 30, "há reflexões repetidas em setembro"
+    assert len({dias[dia]["title"] for dia in dias}) == 30, "há títulos repetidos em setembro"
+    assert all(
+        isinstance(dias[dia].get("content"), list)
+        and len(dias[dia]["content"]) == 2
+        and all(isinstance(paragrafo, str) and paragrafo.strip() for paragrafo in dias[dia]["content"])
+        for dia in dias
+    ), "cada reflexão de setembro deve ter dois parágrafos não vazios"
+
+
 def test_index_carrega_reflexoes_por_mes():
     with open(_path("index.html"), encoding="utf-8") as fh:
         html = fh.read()
