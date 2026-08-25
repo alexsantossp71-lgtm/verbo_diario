@@ -123,3 +123,43 @@ def test_pagina_tem_aviso_noscript():
     with open(_path("index.html"), encoding="utf-8") as fh:
         html = fh.read()
     assert "<noscript>" in html
+
+
+def test_estilos_compilados_sem_tailwind_cdn():
+    """O site deve usar CSS compilado estático, sem carregar o compilador Tailwind CDN em runtime."""
+    assert os.path.exists(_path("styles.css")), "styles.css deve existir"
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert "cdn.tailwindcss.com" not in html, "Tailwind CDN em runtime não deve ser usado"
+    assert 'href="styles.css"' in html, "link para styles.css deve estar presente"
+
+
+def test_estado_de_data_na_url():
+    """A data selecionada deve ser refletida na URL via History API e lida na inicialização."""
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert "URLSearchParams(window.location.search)" in html
+    assert "window.history.pushState" in html
+    assert "popstate" in html
+
+
+def test_pwa_manifest_e_service_worker():
+    """O aplicativo deve possuir suporte a PWA (manifest, ícones, service worker e offline)."""
+    assert os.path.exists(_path("manifest.json")), "manifest.json deve existir"
+    assert os.path.exists(_path("sw.js")), "sw.js deve existir"
+    assert os.path.exists(_path("favicon.svg")), "favicon.svg deve existir"
+
+    with open(_path("manifest.json"), encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    assert manifest.get("name")
+    assert manifest.get("icons")
+
+    with open(_path("sw.js"), encoding="utf-8") as fh:
+        sw = fh.read()
+    assert "STATIC_CACHE" in sw or "CACHE_VERSION" in sw
+    assert "liturgia.up.railway.app" in sw
+
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert 'rel="manifest"' in html
+    assert "navigator.serviceWorker.register" in html

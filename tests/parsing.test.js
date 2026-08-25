@@ -151,3 +151,21 @@ test('HomilySection renderiza autor, âncora e escapa o conteúdo', () => {
   assert.ok(!html.includes('<img src=x'), 'o conteúdo da reflexão deve ser escapado');
   assert.match(plainText(html), /Primeiro parágrafo\./);
 });
+
+test('getLiturgicalColor mapeia cores litúrgicas corretamente', () => {
+  const { getLiturgicalColor } = loadApp();
+  assert.equal(getLiturgicalColor('Verde'), '#16a34a');
+  assert.equal(getLiturgicalColor('Roxo'), '#7c3aed');
+  assert.equal(getLiturgicalColor('Branco'), '#cbd5e1');
+  assert.equal(getLiturgicalColor('Vermelho'), '#dc2626');
+  assert.equal(getLiturgicalColor('Rosa'), '#ec4899');
+  assert.equal(getLiturgicalColor('Dourado'), '#d97706');
+  assert.equal(getLiturgicalColor('inexistente'), '#64748b');
+});
+
+test('resolveSelectedDateParts divide datas ISO e gera caminhos mensais', () => {
+  const { resolveSelectedDateParts, getReflectionMonthPath } = loadApp();
+  const parts = resolveSelectedDateParts('2026-10-12');
+  assert.deepEqual(parts, { year: '2026', month: '10', day: '12', iso: '2026-10-12' });
+  assert.equal(getReflectionMonthPath('10'), './data/reflexoes/10.json');
+});

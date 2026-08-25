@@ -9,228 +9,20 @@
     <meta property="og:description" content="Leituras da liturgia católica de todos os dias em tipografia confortável.">
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#f9f9f9">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 
-        :root {
-            --primary: #000000;
-            --primary-container: #3b3b3b;
-            --on-primary: #e2e2e2;
-            --surface: #f9f9f9;
-            --surface-container-lowest: #ffffff;
-            --surface-container-low: #f3f3f4;
-            --surface-container: #eeeeee;
-            --surface-container-high: #e8e8e8;
-            --surface-container-highest: #e2e2e2;
-            --on-surface: #1a1c1c;
-            --secondary: #5f5e5e;
-            --tertiary: #3b3b3c;
-            --font-lexend: 'Lexend', sans-serif;
-            --reading-font-size: 1.25rem;
-            --line-height-multiplier: 1.6;
-            --tracking: 0.02em;
-            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    <!-- PWA & Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Verbo Diário">
 
-        .dark {
-            --primary: #ffffff;
-            --on-primary: #1a1c1c;
-            --surface: #1a1c1c;
-            --surface-container-lowest: #000000;
-            --on-surface: #f0f1f1;
-        }
-
-        body {
-            font-family: var(--font-lexend);
-            background-color: var(--surface);
-            color: var(--on-surface);
-            line-height: var(--line-height-multiplier);
-            letter-spacing: var(--tracking);
-            overflow-x: hidden;
-        }
-
-        .liturgical-scroll-indicator {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 6px;
-            height: 0%;
-            background-color: var(--primary);
-            z-index: 100;
-            transition: height 0.1s ease-out;
-        }
-
-        h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; }
-        h2 { font-size: 1.75rem; font-weight: 700; }
-        .reading-text { font-size: var(--reading-font-size); max-width: 800px; margin: 0 auto; }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: var(--on-primary);
-            border-radius: 0.75rem;
-            padding: 1rem 2rem;
-            font-weight: 700;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--surface); }
-        ::-webkit-scrollbar-thumb { background: var(--surface-container-high); border-radius: 10px; }
-
-        /* Scroll margin for fixed header - larger on mobile for 2-row header */
-        section[id] {
-            scroll-margin-top: 180px;
-        }
-        @media (min-width: 768px) {
-            section[id] {
-                scroll-margin-top: 120px;
-            }
-        }
-        /*
-         * Theme primitives
-         *
-         * Most of the page is rendered after the API response arrives, so the
-         * semantic classes below are also used by the HTML templates in the
-         * script. Keeping the colors here (instead of relying on Tailwind's
-         * fixed gray/white utilities) makes the light and dark themes behave
-         * consistently before and after a re-render.
-         */
-        :root {
-            --heading-1-size: 3.5rem;
-            --heading-2-size: 1.75rem;
-            --text-muted: #5f6363;
-            --border-subtle: #dedfe0;
-            --focus-ring: #4f46e5;
-            color-scheme: light;
-        }
-
-        .dark {
-            --primary-container: #d6d6d6;
-            --secondary: #c4c6c6;
-            --tertiary: #d5d5d6;
-            --surface: #111313;
-            --surface-container-lowest: #1b1e1e;
-            --surface-container-low: #232626;
-            --surface-container: #2b2e2e;
-            --surface-container-high: #353838;
-            --surface-container-highest: #414444;
-            --on-surface: #f0f1f1;
-            --text-muted: #c4c6c6;
-            --border-subtle: #4b4f4f;
-            --focus-ring: #a5b4fc;
-            color-scheme: dark;
-        }
-
-        h1 { font-size: var(--heading-1-size); }
-        h2 { font-size: var(--heading-2-size); }
-
-        .app-header {
-            background-color: color-mix(in srgb, var(--surface-container-lowest) 92%, transparent) !important;
-            border-color: var(--border-subtle) !important;
-            color: var(--on-surface);
-        }
-
-        .surface-panel {
-            background-color: var(--surface-container-lowest) !important;
-            color: var(--on-surface);
-        }
-
-        .app-sidebar,
-        .app-footer {
-            background-color: var(--surface-container-low) !important;
-            border-color: var(--border-subtle) !important;
-            color: var(--on-surface);
-        }
-
-        .theme-muted {
-            color: var(--text-muted) !important;
-        }
-
-        .theme-border {
-            border-color: var(--border-subtle) !important;
-        }
-
-        .theme-hover:hover {
-            background-color: var(--surface-container-high) !important;
-        }
-
-        .app-skeleton {
-            background-color: var(--surface-container) !important;
-        }
-
-        .surface-input {
-            background-color: var(--surface-container-lowest) !important;
-            color: var(--on-surface) !important;
-            border-color: var(--border-subtle) !important;
-            color-scheme: inherit;
-        }
-
-        .surface-input:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
-        }
-
-        .date-secondary-action {
-            color: var(--on-surface);
-            border-color: var(--border-subtle) !important;
-        }
-
-        .on-primary {
-            color: var(--on-primary) !important;
-        }
-
-        .btn-primary {
-            background-color: var(--primary) !important;
-            color: var(--on-primary) !important;
-            transition: var(--transition-smooth);
-        }
-
-        .verse-divider {
-            border-color: var(--border-subtle) !important;
-        }
-
-        .verse-number {
-            color: var(--text-muted) !important;
-        }
-
-        .reading-paragraph {
-            font-size: var(--reading-font-size) !important;
-        }
-
-        @media (max-width: 767px) {
-            h1 { font-size: min(var(--heading-1-size), 2.5rem); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                scroll-behavior: auto !important;
-                transition-duration: 0.01ms !important;
-                animation-duration: 0.01ms !important;
-            }
-        }
-    </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        surface: 'var(--surface)',
-                        'on-surface': 'var(--on-surface)',
-                        primary: 'var(--primary)',
-                        secondary: 'var(--secondary)',
-                        'surface-container-low': 'var(--surface-container-low)',
-                        'surface-container-high': 'var(--surface-container-high)',
-                        'surface-container-lowest': 'var(--surface-container-lowest)',
-                        'surface-container-highest': 'var(--surface-container-highest)',
-                        'on-primary': 'var(--on-primary)',
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Fontes e Estilos Compilados (sem Tailwind CDN em runtime) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="selection:bg-primary selection:text-on-primary">
     <div id="scrollIndicator" class="liturgical-scroll-indicator"></div>
@@ -413,8 +205,13 @@
             const input = document.getElementById('dateInput');
             const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
 
-            // Allow future dates by not setting input.max
-            if (!input.value) input.value = todayStr;
+            // Sincroniza o valor do input com a data atual ou a data em exibição
+            if (appInstance && appInstance.currentDateStr) {
+                input.value = appInstance.currentDateStr;
+            } else if (!input.value) {
+                input.value = todayStr;
+            }
+
             modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('hidden');
             // Foco inicial no campo de data ao abrir o diálogo
@@ -436,16 +233,16 @@
             const val = input.value;
             if (!val) return;
             document.getElementById('dateModal').classList.add('hidden');
-            if (appInstance) appInstance.loadDate(val);
+            if (appInstance) appInstance.loadDate(val, true);
         }
 
         function goToToday() {
             document.getElementById('dateModal').classList.add('hidden');
-            if (appInstance) appInstance.loadDate(null);
+            if (appInstance) appInstance.loadDate(null, true);
         }
 
         function retryLoad() {
-            if (appInstance) appInstance.loadDate(appInstance.currentDateStr);
+            if (appInstance) appInstance.loadDate(appInstance.currentDateStr, false);
         }
 
         // Escapa HTML antes de injetar conteúdo vindo da API
@@ -692,10 +489,19 @@
                 applyFont();
                 window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
                 document.addEventListener('keydown', (e) => this.handleKeydown(e));
+                window.addEventListener('popstate', () => this.handlePopState());
+
                 const yearEl = document.getElementById('footerYear');
                 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
                 appInstance = this;
-                await this.loadDate(null);
+
+                // Lê data a partir da query string da URL (?data=YYYY-MM-DD)
+                const urlParams = new URLSearchParams(window.location.search);
+                const dateParam = urlParams.get('data');
+                const validDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+                const initialDate = dateParam && validDatePattern.test(dateParam) ? dateParam : null;
+
+                await this.loadDate(initialDate, false);
             }
 
             // Teclado no modal: Esc fecha e Tab/Shift+Tab ficam contidos nele (WCAG 2.1.2)
@@ -724,17 +530,45 @@
                 }
             }
 
-            async loadDate(dateStr) {
+            handlePopState() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const dateParam = urlParams.get('data');
+                const validDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+                const targetDate = dateParam && validDatePattern.test(dateParam) ? dateParam : null;
+                this.loadDate(targetDate, false);
+            }
+
+            updateUrlState(dateStr) {
+                if (!window.history || typeof window.history.pushState !== 'function') return;
+                const currentUrl = new URL(window.location.href);
+                const currentParam = currentUrl.searchParams.get('data');
+
+                if (dateStr) {
+                    if (currentParam !== dateStr) {
+                        currentUrl.searchParams.set('data', dateStr);
+                        window.history.pushState({ data: dateStr }, '', currentUrl);
+                    }
+                } else {
+                    if (currentParam) {
+                        currentUrl.searchParams.delete('data');
+                        window.history.pushState({ data: null }, '', currentUrl);
+                    }
+                }
+            }
+
+            async loadDate(dateStr, updateUrl = false) {
                 // dateStr formats expected as "YYYY-MM-DD"
                 this.currentDateStr = dateStr;
-                
+
                 // Show Banner if not today
                 const todayStr = new Date().toLocaleDateString('en-CA');
                 if (dateStr && dateStr !== todayStr) {
                     this.dateBanner.classList.remove('hidden');
+                    if (updateUrl) this.updateUrlState(dateStr);
                 } else {
                     this.dateBanner.classList.add('hidden');
                     this.currentDateStr = null; // Treat 'today' date as null to use default endpoint
+                    if (updateUrl) this.updateUrlState(null);
                 }
 
                 // Show loaders
@@ -744,7 +578,7 @@
                         <div class="app-skeleton h-96 animate-pulse rounded-[3rem]"></div>
                     </div>
                 `;
-                
+
                 // Fetch
                 await this.fetchData();
             }
@@ -889,9 +723,18 @@
             }
         }
 
+        // --- Registro do Service Worker (Offline & PWA) ---
+        if ('serviceWorker' in navigator && (window.location.protocol.startsWith('http') || window.location.protocol === 'file:')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch((err) => {
+                    console.warn('Service Worker registration failed:', err);
+                });
+            });
+        }
+
         // --- Inicialização do app ---
         // DOMContentLoaded em vez de window.onload: o fetch da liturgia começa
-        // sem esperar fontes e o CDN do Tailwind terminarem de carregar.
+        // sem esperar fontes terminarem de carregar.
         function startApp() {
             new App();
         }
