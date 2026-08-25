@@ -74,8 +74,6 @@
             font-weight: 700;
         }
 
-        body.large-text { --reading-font-size: 1.75rem; --line-height-multiplier: 1.8; }
-        
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--surface); }
@@ -171,8 +169,7 @@
             </div>
             <p class="text-sm text-gray-400 font-bold uppercase tracking-widest mb-4">Selecione um dia</p>
             <input type="date" id="dateInput"
-                class="w-full text-xl font-bold p-4 rounded-2xl border-2 border-gray-100 focus:border-primary focus:outline-none transition-all"
-                max="" />
+                class="w-full text-xl font-bold p-4 rounded-2xl border-2 border-gray-100 focus:border-primary focus:outline-none transition-all" />
             <div class="flex gap-4 mt-8">
                 <button onclick="goToToday()" class="flex-1 py-4 rounded-full border-2 border-gray-200 font-bold hover:bg-gray-50 transition-all">
                     Hoje
@@ -300,30 +297,78 @@
             if (appInstance) appInstance.loadDate(null);
         }
 
+        function retryLoad() {
+            if (appInstance) appInstance.loadDate(appInstance.currentDateStr);
+        }
+
+        // Escapa HTML antes de injetar conteúdo vindo da API
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         const Components = {
-            // Parses inline verse numbers like "32A multidão..." into structured verse objects
+            // Converte "Naquele tempo, disse Jesus: 23“Ai de vós..." em blocos de versículos.
+            // O texto anterior ao primeiro versículo (preâmbulo) é preservado, e o número
+            // pode vir seguido de aspas — padrão da API para falas em discurso direto.
             parseVerses: (text) => {
-                // Split on verse numbers: digit(s) followed by an uppercase letter
-                const parts = text.split(/(\d+)(?=[A-ZÁÀÂÃÉÊÍÓÔÕÚÜÇ])/);
-                
-                // Function to format inline verses (mid-sentence verses starting with lowercase)
-                const formatInlineVerses = (str) => {
-                    return str.replace(/(\d+)(?=[a-záàâãéêíóôõúüç])/g, '<span class="inline-block text-xs font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded mx-1 align-baseline">$1</span> ');
-                };
+                const source = String(text == null ? '' : text);
+
+                // Aspas de abertura aceitas entre o número e a primeira letra maiúscula
+                const OPENING_QUOTES = '\u201C\u201D"\u00AB\u2018\u0027';
+                const UPPER = 'A-Z\u00C1\u00C0\u00C2\u00C3\u00C9\u00CA\u00CD\u00D3\u00D4\u00D5\u00DA\u00DC\u00C7';
+                const LOWER = 'a-z\u00E1\u00E0\u00E2\u00E3\u00E9\u00EA\u00ED\u00F3\u00F4\u00F5\u00FA\u00FC\u00E7';
+                const marker = new RegExp('(\\d{1,3})(?=[' + OPENING_QUOTES + ']?[' + UPPER + '])', 'g');
+
+                // Versículos no meio da frase (iniciados por minúscula) viram marcadores inline
+                const inlineMarker = new RegExp('(\\d{1,3})(?=[' + LOWER + '])', 'g');
+                const formatInlineVerses = (str) => escapeHtml(str).replace(
+                    inlineMarker,
+                    '<span class="inline-block text-xs font-black text-secondary bg-surface-container-high px-1.5 py-0.5 rounded mx-1 align-baseline">$1</span> '
+                );
 
                 const verses = [];
-                for (let i = 1; i < parts.length; i += 2) {
-                    const num = parts[i];
-                    let content = parts[i + 1] ? parts[i + 1].trim() : '';
-                    content = formatInlineVerses(content);
-                    
-                    if (content) verses.push({ num, content });
+                let cursor = 0;
+                let match;
+
+                while ((match = marker.exec(source)) !== null) {
+                    const start = match.index;
+                    // Ignora dígitos colados em palavras/números maiores (ex.: "2Ts", "1-11")
+                    const before = start > 0 ? source[start - 1] : '';
+                    if (before && /[\dA-Za-z\u00C0-\u017F]/.test(before)) continue;
+
+                    // Tudo que antecede este versículo pertence ao bloco anterior
+                    const chunk = source.slice(cursor, start).trim();
+                    if (chunk) {
+                        if (verses.length === 0) {
+                            // Preâmbulo narrativo ("Naquele tempo, disse Jesus:")
+                            verses.push({ num: '', content: formatInlineVerses(chunk) });
+                        } else {
+                            verses[verses.length - 1].content += ' ' + formatInlineVerses(chunk);
+                        }
+                    }
+
+                    verses.push({ num: match[1], content: '' });
+                    cursor = start + match[1].length;
                 }
-                
-                // If no uppercase verse numbers found, treat whole text as single block but try inline formatting
-                if (verses.length === 0) return [{ num: '', content: formatInlineVerses(text.trim()) }];
-                
-                return verses;
+
+                // Resto do texto após o último marcador
+                const tail = source.slice(cursor).trim();
+                if (tail) {
+                    if (verses.length === 0) {
+                        verses.push({ num: '', content: formatInlineVerses(tail) });
+                    } else {
+                        verses[verses.length - 1].content += formatInlineVerses(tail);
+                    }
+                }
+
+                return verses
+                    .map(v => ({ num: v.num, content: v.content.trim() }))
+                    .filter(v => v.content);
             },
 
             ReadingCard: (title, reference, text, id = "") => {
@@ -341,8 +386,8 @@
                     <div class="mb-12">
                         <span class="text-secondary uppercase tracking-widest text-xs font-bold mb-2 block">Leitura do Dia</span>
                         <h2 class="text-4xl md:text-6xl font-black text-on-surface tracking-tight leading-tight">
-                            ${title} <br/>
-                            <span class="text-secondary text-2xl md:text-4xl">(${reference})</span>
+                            ${escapeHtml(title)} <br/>
+                            <span class="text-secondary text-2xl md:text-4xl">(${escapeHtml(reference)})</span>
                         </h2>
                     </div>
                     <article class="relative bg-surface-container-lowest rounded-3xl p-10 md:p-20 shadow-sm overflow-hidden">
@@ -358,18 +403,20 @@
                 </section>
             `},
             PsalmSection: (reference, refrain, texto) => {
-                // Split the psalm text by '—' (em dash or regular), keeping the dash
-                const raw = texto.split(/(?=—|(?<=[^\d])—)/).map(s => s.trim()).filter(Boolean);
-                // Alternatively, just split on '—' preserving it:
-                const parts = [];
-                texto.split('—').forEach((chunk, i) => {
-                    const clean = chunk.trim().replace(/^\d+/, '').trim();
-                    if (clean) parts.push((i > 0 ? '— ' : '') + clean);
-                });
+                // A API separa as estrofes por quebra de linha e/ou travessão.
+                // Aceita EN DASH (–, U+2013), EM DASH (—, U+2014) e hífen.
+                const parts = String(texto == null ? '' : texto)
+                    .split(/\r?\n|(?=[\u2013\u2014-]\s)/)
+                    .map(chunk => chunk.trim()
+                        .replace(/^[\u2013\u2014-]\s*/, '')  // remove o travessão inicial
+                        .replace(/^\d+\s*/, '')              // remove numeração de estrofe
+                        .trim())
+                    .filter(Boolean)
+                    .map(clean => '\u2014 ' + clean);
 
                 const refraoCompact = `
                     <div class="flex items-center justify-center text-center py-3 px-6 bg-surface-container-low/60 rounded-lg border-l-4 border-primary max-w-2xl mx-auto mb-8 mt-2">
-                        <p class="text-base md:text-lg font-bold text-primary leading-snug italic">${refrain}</p>
+                        <p class="text-base md:text-lg font-bold text-primary leading-snug italic">${escapeHtml(refrain)}</p>
                     </div>
                 `;
 
@@ -379,7 +426,7 @@
                     if (i > 0) strophesHtml += refraoCompact;
                     strophesHtml += `
                         <div class="max-w-2xl mx-auto mb-10 pl-2">
-                            <p class="text-xl md:text-2xl leading-relaxed">${strophe}</p>
+                            <p class="text-xl md:text-2xl leading-relaxed">${escapeHtml(strophe)}</p>
                         </div>
                     `;
                 });
@@ -390,13 +437,13 @@
                 <section class="max-w-4xl mx-auto mb-24 px-6" id="psalm">
                     <div class="mb-12">
                         <span class="text-secondary uppercase tracking-widest text-xs font-bold mb-2 block">Salmo Responsorial</span>
-                        <h2 class="text-4xl md:text-6xl font-black text-on-surface tracking-tight leading-tight">${reference}</h2>
+                        <h2 class="text-4xl md:text-6xl font-black text-on-surface tracking-tight leading-tight">${escapeHtml(reference)}</h2>
                     </div>
                     <div class="bg-surface-container-lowest p-8 md:p-16 rounded-3xl shadow-sm">
                         <!-- Refrão principal (início) -->
                         <div class="flex flex-col items-center justify-center text-center py-12 px-8 bg-surface-container-low rounded-2xl border-l-[8px] border-primary mb-12">
                             <span class="text-secondary font-bold text-xs tracking-[0.3em] mb-6">— REFRÃO —</span>
-                            <p class="text-2xl md:text-4xl font-extrabold text-primary">${refrain}</p>
+                            <p class="text-2xl md:text-4xl font-extrabold text-primary">${escapeHtml(refrain)}</p>
                         </div>
                         ${strophesHtml}
                     </div>
@@ -471,36 +518,72 @@
             }
 
             async fetchData() {
+                let url = 'https://liturgia.up.railway.app/';
+                if (this.currentDateStr) {
+                    const [year, month, day] = this.currentDateStr.split('-');
+                    url += `${day}-${month}-${year}`; // API exige DD-MM-YYYY
+                }
+
                 let data;
                 try {
-                    let url = 'https://liturgia.up.railway.app/';
-                    if (this.currentDateStr) {
-                        const [year, month, day] = this.currentDateStr.split('-');
-                        url += `${day}-${month}-${year}`; // API requires DD-MM-YYYY
+                    // Timeout evita esqueleto de carregamento infinito se a API travar
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 8000);
+                    let res;
+                    try {
+                        res = await fetch(url, { signal: controller.signal });
+                    } finally {
+                        clearTimeout(timer);
                     }
 
-                    // The Railway API has CORS configured, so we can fetch directly even from file://
-                    const res = await fetch(url);
-                    
-                    if (!res.ok) throw new Error("API Falhou com status " + res.status);
-                    
+                    if (!res.ok) throw new Error('A API respondeu com status ' + res.status);
+
                     data = await res.json();
+                    if (!data || typeof data !== 'object') throw new Error('Resposta da API em formato inesperado.');
                 } catch (e) {
-                    console.error("Fetch Error:", e);
-                    data = {
-                        data: this.currentDateStr ? this.currentDateStr.split('-').reverse().join('/') : "Hoje", 
-                        cor: "Verde",
-                        primeiraLeitura: { referencia: "Atos 1, 1-11", texto: "No meu primeiro livro..." },
-                        salmo: { referencia: "Salmo 23", refrao: "O Senhor é o pastor...", texto: "1 Pelos prados - Para as águas..." },
-                        evangelho: { referencia: "Mt 5, 1-12", texto: "Vendo as multidões..." }
-                    };
+                    console.error('Fetch Error:', e);
+                    // Nunca inventar leituras: mostrar erro honesto com opção de tentar de novo
+                    this.renderError(e);
+                    return;
                 }
-                
+
                 try {
                     this.render(data);
                 } catch (err) {
-                    console.error("Render Error:", err);
+                    console.error('Render Error:', err);
+                    this.renderError(err);
                 }
+            }
+
+            renderError(error) {
+                const isAbort = error && error.name === 'AbortError';
+                const detalhe = isAbort
+                    ? 'A conexão demorou demais para responder.'
+                    : 'Não foi possível falar com o servidor da liturgia.';
+                const diaLabel = this.currentDateStr
+                    ? this.currentDateStr.split('-').reverse().join('/')
+                    : 'de hoje';
+
+                this.dailyInfoContainer.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-xl md:text-2xl font-black text-primary tracking-tight">Verbo Diário</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold text-secondary">Sem conexão</span>
+                    </div>
+                `;
+
+                this.appContent.innerHTML = `
+                    <section class="max-w-2xl mx-auto px-6 text-center" role="alert">
+                        <div class="bg-surface-container-lowest rounded-3xl p-10 md:p-16 shadow-sm">
+                            <span class="material-symbols-outlined text-5xl text-secondary mb-6 block">cloud_off</span>
+                            <h2 class="text-3xl md:text-4xl font-black mb-4">Não foi possível carregar a liturgia ${escapeHtml(diaLabel)}</h2>
+                            <p class="text-base md:text-lg text-secondary mb-10">${escapeHtml(detalhe)} Verifique sua conexão e tente novamente.</p>
+                            <button onclick="retryLoad()" class="btn-primary inline-flex items-center gap-2 hover:opacity-80 transition-all">
+                                <span class="material-symbols-outlined">refresh</span>
+                                Tentar novamente
+                            </button>
+                        </div>
+                    </section>
+                `;
             }
 
             handleScroll() {
