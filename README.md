@@ -13,6 +13,7 @@ Aplicativo web de **liturgia diária** — leitura e acompanhamento das leituras
 - 🔤 **Tipografia otimizada para leitura** (fonte Lexend, tamanho e espaçamento ajustáveis)
 - 🌓 **Tema claro/escuro** estilo Material Design (preferência salva no navegador)
 - 📱 **Layout responsivo** para mobile e desktop
+- ♿ **Acessibilidade**: modal fecha com `Esc`, foco contido no diálogo, rótulos para leitores de tela e aviso `<noscript>`
 - 🛡️ **Estado de erro honesto** quando a API está indisponível (com botão de tentar novamente)
 
 ## 🚀 Como executar
