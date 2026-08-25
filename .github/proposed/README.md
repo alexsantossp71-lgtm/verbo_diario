@@ -4,6 +4,28 @@ O ambiente que gerou este branch não tem permissão `workflows` para alterar
 arquivos em `.github/workflows/`, então as mudanças de CI ficaram registradas
 aqui como patch.
 
+## Falha atual do CI (25/08/2026)
+
+O run [32873534569](https://github.com/alexsantossp71-lgtm/verbo_diario/actions/runs/32873534569) falhou no passo **Configurar Python**:
+
+```
+No file matched to [**/requirements.txt or **/pyproject.toml]
+```
+
+Causa: `cache: pip` no `actions/setup-python@v5` sem `requirements.txt`.
+
+**GitHub Pages** no mesmo push **passou** (run 32873534405). O site está `built` em
+https://alexsantossp71-lgtm.github.io/verbo_diario/
+
+Aplicar o conserto:
+
+```bash
+git apply .github/proposed/ci-fix-cache.patch
+git add .github/workflows/ci.yml
+git commit -m "Corrige CI: remove cache pip sem requirements.txt"
+git push
+```
+
 ## Como aplicar
 
 ```bash
