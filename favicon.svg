@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#111313"/>
+  <!-- Open sacred book motif -->
+  <path d="M256 120 C230 100, 160 90, 96 104 C82 107, 72 119, 72 134 L72 386 C72 402, 86 414, 102 411 C160 400, 224 412, 256 432 C288 412, 352 400, 410 411 C426 414, 440 402, 440 386 L440 134 C440 119, 430 107, 416 104 C352 90, 282 100, 256 120 Z" fill="#1b1e1e" stroke="#dedfe0" stroke-width="12" stroke-linejoin="round"/>
+  <!-- Central spine divider -->
+  <line x1="256" y1="120" x2="256" y2="430" stroke="#dedfe0" stroke-width="10" stroke-linecap="round"/>
+  <!-- Subtle Cross in gold on left page -->
+  <line x1="176" y1="180" x2="176" y2="320" stroke="#d97706" stroke-width="14" stroke-linecap="round"/>
+  <line x1="140" y1="220" x2="212" y2="220" stroke="#d97706" stroke-width="14" stroke-linecap="round"/>
+  <!-- Reading lines on right page -->
+  <line x1="300" y1="180" x2="380" y2="180" stroke="#dedfe0" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <line x1="300" y1="220" x2="380" y2="220" stroke="#dedfe0" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <line x1="300" y1="260" x2="380" y2="260" stroke="#dedfe0" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <line x1="300" y1="300" x2="350" y2="300" stroke="#dedfe0" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+</svg>

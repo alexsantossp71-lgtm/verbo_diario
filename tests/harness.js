@@ -16,7 +16,7 @@ function loadApp() {
 
   // O último bloco inline contém Components / App; corta o bootstrap final
   // ("// --- Inicialização do app ---") para não instanciar o App ao avaliar.
-  const code = scripts[scripts.length - 1].replace(/\n\s*\/\/ --- Inicialização do app ---[\s\S]*$/, '');
+  const code = scripts[scripts.length - 1].replace(/\n\s*\/\/ --- Registro do Service Worker[\s\S]*$/, '');
 
   // Avaliado no mesmo realm do test runner para que os objetos criados pelo
   // app (arrays, objetos) sejam comparáveis com assert.deepEqual.
@@ -30,12 +30,17 @@ function loadApp() {
       body: { classList: { contains: () => false, add: noop, toggle: noop } },
       documentElement: { style: { setProperty: noop } },
     },
-    window: { addEventListener: noop },
+    window: {
+      addEventListener: noop,
+      location: { search: '', href: 'http://localhost/' },
+      history: { pushState: noop },
+    },
+    navigator: { serviceWorker: { register: () => Promise.resolve() } },
   };
 
   const factory = new Function(
     ...Object.keys(stubs),
-    code + '\n;return { Components, escapeHtml };'
+    code + '\n;return { Components, escapeHtml, getLiturgicalColor, resolveSelectedDateParts, getReflectionMonthPath, App };'
   );
 
   return factory(...Object.values(stubs));
