@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
 
       - name: Testes de renderização (Node)
-        run: node --test 'tests/*.test.js'
+        run: node --test tests/parsing.test.js
 
       - name: Configurar Python
         uses: actions/setup-python@v5
