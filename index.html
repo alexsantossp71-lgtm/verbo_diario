@@ -252,7 +252,7 @@
                     <button id="fontToggleMobile" class="p-2 rounded-full theme-hover transition-all" onclick="toggleFont()" aria-label="Alternar tamanho da fonte">
                         <span class="material-symbols-outlined text-xl">format_size</span>
                     </button>
-                    <button onclick="openDateModal()" class="p-2 rounded-full theme-hover transition-all">
+                    <button onclick="openDateModal()" class="p-2 rounded-full theme-hover transition-all" title="Ver outro dia" aria-label="Ver outro dia">
                         <span class="material-symbols-outlined text-xl">calendar_month</span>
                     </button>
                 </div>
@@ -281,16 +281,24 @@
         </div>
     </header>
 
+    <!-- Aviso para visitantes sem JavaScript (o esqueleto nunca é substituído sem JS) -->
+    <noscript>
+        <div style="max-width: 640px; margin: 240px auto 40px; padding: 32px; font-family: sans-serif; text-align: center; border: 1px solid #9ca3af; border-radius: 16px; line-height: 1.6;">
+            <h2 style="margin: 0 0 12px; font-size: 1.5rem;">JavaScript desativado</h2>
+            <p style="margin: 0;">O Verbo Diário precisa de JavaScript para buscar as leituras da liturgia do dia. Ative o JavaScript no navegador e recarregue a página.</p>
+        </div>
+    </noscript>
+
     <!-- Date Picker Modal -->
-    <div id="dateModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm hidden" onclick="closeDateModal(event)">
+    <div id="dateModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm hidden" onclick="closeDateModal(event)" role="dialog" aria-modal="true" aria-labelledby="dateModalTitle">
         <div class="surface-panel rounded-t-3xl md:rounded-3xl p-8 md:p-12 w-full md:max-w-md shadow-2xl" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black">Escolher Data</h2>
-                <button onclick="closeDateModal()" class="p-2 rounded-full theme-hover transition-all">
+                <h2 id="dateModalTitle" class="text-2xl font-black">Escolher Data</h2>
+                <button onclick="closeDateModal()" class="p-2 rounded-full theme-hover transition-all" aria-label="Fechar">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <p class="theme-muted text-sm font-bold uppercase tracking-widest mb-4">Selecione um dia</p>
+            <label for="dateInput" class="theme-muted text-sm font-bold uppercase tracking-widest mb-4 block">Selecione um dia</label>
             <input type="date" id="dateInput"
                 class="surface-input w-full text-xl font-bold p-4 rounded-2xl border-2 focus:outline-none transition-all" />
             <div class="flex gap-4 mt-8">
@@ -319,7 +327,7 @@
             <div>
                 <h3 class="theme-muted text-xs font-black uppercase tracking-[0.3em] mb-8">Arquivos Sagrados</h3>
                 <nav class="space-y-4">
-                    <a href="#" class="surface-panel flex items-center gap-4 p-4 rounded-2xl shadow-sm text-primary font-bold">
+                    <a href="#gospel" class="surface-panel flex items-center gap-4 p-4 rounded-2xl shadow-sm text-primary font-bold">
                         <span class="material-symbols-outlined">auto_stories</span>
                         Evangelho de Hoje
                     </a>
@@ -337,7 +345,7 @@
     <footer class="app-footer xl:ml-80 py-20 px-8 border-t">
         <div class="max-w-4xl mx-auto flex flex-col items-center gap-12 text-center">
             <div class="text-2xl font-black tracking-tight">Verbo Diário</div>
-            <p class="text-xs font-bold opacity-40 uppercase tracking-[0.2em]">© 2026 Verbo Diário. A Liturgia como Arte.</p>
+            <p class="text-xs font-bold opacity-40 uppercase tracking-[0.2em]">© <span id="footerYear">2026</span> Verbo Diário. A Liturgia como Arte.</p>
         </div>
     </footer>
 
@@ -392,20 +400,29 @@
         // --- Date Modal & Global App Instance ---
         let appInstance = null;
 
+        // Guarda o elemento que abriu o modal para devolver o foco ao fechar (WCAG 2.4.3)
+        let modalReturnFocus = null;
+
         function openDateModal() {
             const modal = document.getElementById('dateModal');
             const input = document.getElementById('dateInput');
             const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
-            
+
             // Allow future dates by not setting input.max
             if (!input.value) input.value = todayStr;
+            modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('hidden');
+            // Foco inicial no campo de data ao abrir o diálogo
+            if (input) input.focus();
         }
 
         function closeDateModal(event) {
-            // Close if clicking outside or on the close button
-            if (!event || event.target.id === 'dateModal' || event.currentTarget.tagName === 'BUTTON') {
-                document.getElementById('dateModal').classList.add('hidden');
+            // Fecha ao clicar fora, no botão fechar ou ao pressionar Esc (sem evento)
+            if (event && event.target.id !== 'dateModal' && event.currentTarget.tagName !== 'BUTTON') return;
+            document.getElementById('dateModal').classList.add('hidden');
+            if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') {
+                modalReturnFocus.focus();
+                modalReturnFocus = null;
             }
         }
 
@@ -630,9 +647,38 @@
                 }
                 applyTheme();
                 applyFont();
-                window.addEventListener('scroll', () => this.handleScroll());
+                window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
+                document.addEventListener('keydown', (e) => this.handleKeydown(e));
+                const yearEl = document.getElementById('footerYear');
+                if (yearEl) yearEl.textContent = String(new Date().getFullYear());
                 appInstance = this;
                 await this.loadDate(null);
+            }
+
+            // Teclado no modal: Esc fecha e Tab/Shift+Tab ficam contidos nele (WCAG 2.1.2)
+            handleKeydown(e) {
+                const modal = document.getElementById('dateModal');
+                if (!modal || modal.classList.contains('hidden')) return;
+
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeDateModal();
+                    return;
+                }
+
+                if (e.key === 'Tab') {
+                    const focusables = modal.querySelectorAll('button, input');
+                    if (!focusables.length) return;
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
             }
 
             async loadDate(dateStr) {
@@ -730,9 +776,15 @@
             }
 
             handleScroll() {
+                if (!this.scrollIndicator) return;
                 const winScroll = document.documentElement.scrollTop;
                 const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                this.scrollIndicator.style.height = (winScroll / height * 100) + "%";
+                // Página mais curta que a viewport: divisão por zero geraria "NaN%"
+                if (height <= 0) {
+                    this.scrollIndicator.style.height = "0%";
+                    return;
+                }
+                this.scrollIndicator.style.height = Math.min(100, (winScroll / height) * 100) + "%";
             }
 
             render(data) {
@@ -760,7 +812,18 @@
             }
         }
 
-        window.onload = () => new App();
+        // --- Inicialização do app ---
+        // DOMContentLoaded em vez de window.onload: o fetch da liturgia começa
+        // sem esperar fontes e o CDN do Tailwind terminarem de carregar.
+        function startApp() {
+            new App();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startApp);
+        } else {
+            startApp();
+        }
     </script>
 </body>
 </html>

@@ -14,8 +14,9 @@ function loadApp() {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   if (scripts.length === 0) throw new Error('Nenhum <script> inline encontrado em index.html');
 
-  // O último bloco inline contém Components / App
-  const code = scripts[scripts.length - 1].replace(/window\.onload[\s\S]*$/, '');
+  // O último bloco inline contém Components / App; corta o bootstrap final
+  // ("// --- Inicialização do app ---") para não instanciar o App ao avaliar.
+  const code = scripts[scripts.length - 1].replace(/\n\s*\/\/ --- Inicialização do app ---[\s\S]*$/, '');
 
   // Avaliado no mesmo realm do test runner para que os objetos criados pelo
   // app (arrays, objetos) sejam comparáveis com assert.deepEqual.

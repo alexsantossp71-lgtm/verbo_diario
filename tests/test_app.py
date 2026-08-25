@@ -52,3 +52,28 @@ def test_index_referencia_ancoras_da_navegacao():
         html = fh.read()
     for ancora in ("reading-1", "psalm", "gospel"):
         assert re.search(r'href="#%s"' % ancora, html), f"link para #{ancora} ausente"
+
+
+def test_modal_de_data_e_dialogo_acessivel():
+    """O modal deve ser anunciado como diálogo, fechar no Esc e rotular o campo."""
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert 'id="dateModal"' in html
+    assert 'role="dialog"' in html, "modal sem role=dialog"
+    assert 'aria-modal="true"' in html, "modal sem aria-modal"
+    assert 'aria-labelledby="dateModalTitle"' in html, "modal sem título acessível"
+    assert 'for="dateInput"' in html, "campo de data sem <label> associado"
+    assert "e.key === 'Escape'" in html, "modal não fecha com Esc"
+
+
+def test_indicador_de_rolagem_protegido_contra_nan():
+    """Páginas mais curtas que a viewport dividiam por zero (height: NaN%)."""
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert "height <= 0" in html, "handleScroll sem proteção contra divisão por zero"
+
+
+def test_pagina_tem_aviso_noscript():
+    with open(_path("index.html"), encoding="utf-8") as fh:
+        html = fh.read()
+    assert "<noscript>" in html
